@@ -1,0 +1,18 @@
+#ifndef HANDWRITTING_H
+#define HANDWRITTING_H
+
+#include <QObject>
+
+class handwritting : public QObject
+{
+    Q_OBJECT
+public:
+    explicit handwritting(QObject *parent = 0);
+protected:
+    void recognition();
+signals:
+
+public slots:
+};
+
+#endif // HANDWRITTING_H
