@@ -19,5 +19,9 @@
         <file>image/radio_selected.png</file>
         <file>image/sub-line_horizontal.png</file>
         <file>image/sub-line_vertical.png</file>
+        <file>image/check_back.png</file>
+        <file>image/TEST1.png</file>
+        <file>image/TEST2.png</file>
+        <file>wav/welcome.wav</file>
     </qresource>
 </RCC>

@@ -1,28 +1,34 @@
-#include "mydraw.h"
+﻿#include "mydraw.h"
 #include<fstream> //for load file
 #include<vector>
-
+#include<qDebug>
+#include <QJsonObject>
+#include <QJsonDocument>
+#include<QSound>
+#include <QtCore>
+#include <QProcess>
 //#include "wintab.h"
 //#include "pktdef.h"
 using namespace cv;
+using namespace cv::ml;
 using namespace std;
 mydraw::mydraw(QObject *parent) : QObject(parent)
 {
-    initial_PR("3811hanzi.txt");
+    initial_PR("999hanzi.txt");
 
 
 
     //construct
-    traindata = cvCreateMat(typenum,featdim,CV_32FC1);
-    trainclass= cvCreateMat(typenum,1,CV_32FC1);
-    testdata= cvCreateMat(1,featdim,CV_32FC1);
-    mulW=cvCreateMat(512,512,CV_32FC1);
+    traindata = cvCreateMat(typenum,featdim,CV_32FC1);//loadprototype
+    trainclass= cvCreateMat(typenum,1,CV_32FC1);//loadprototype
+    testdata= cvCreateMat(1,featdim,CV_32FC1);//getFeat_8d
+    mulW=cvCreateMat(512,512,CV_32FC1);//getFeat_8d
 
     //loadprototype
 
-    char* type_txt= "xu_real_mean_intra_class.txt" ;
-    char* weight_txt  = "xu_real_vec.txt";
-    LoadPrototype(type_txt,weight_txt);
+//    char* type_txt= "xu_real_mean_intra_class.txt" ;
+//    char* weight_txt  = "xu_real_vec.txt";
+   // LoadPrototype(type_txt,weight_txt);
 
    //调用之后mulW的值huibianhua
 
@@ -35,35 +41,133 @@ mydraw::~mydraw(void)
     cvReleaseMat(&trainclass);
     cvReleaseMat(&testdata);
 }
-void mydraw::recognition(QString ans,QString input)
+
+QStringList mydraw::recognition(QByteArray input)
 {
+    QByteArray tempArray = QByteArray::fromBase64(input);
+    qDebug() << "OK:"<< tempArray;
+
+    QJsonDocument parse_doucment = QJsonDocument::fromJson(tempArray);
+    QJsonObject obj = parse_doucment.object();
+    if(obj.contains("result"))
+    {
+        QJsonValue res_value = obj.take("result");
+        QString result = res_value.toString();
+        qDebug()<<"result is:"<<result;
+        QStringList strlist=result.split(",");
+        QStringList result_list;
+        QList<QString>::Iterator it = strlist.begin(),itend = strlist.end();
+        int i = 0;
+        for (;it != itend; it++,i++)
+        {
+            QString tmp=*it;
+            //tmp is a #10 str for unicode
+
+            QString str=QString::number(tmp.trimmed().toInt(), 16);
+
+
+            int temp[400];
+            QChar qchar[100];
+            QString strOut;
+            bool ok;
+            int count=str.count();
+            int len=count/4;
+            if (len>1)
+            {
+            for(int i=0;i<count;i+=4)
+            {
+             temp[i]=str.mid(i,4).toInt(&ok,16);//每四位转化为16进制整型
+             qchar[i/4]=temp[i];
+             QString str0(qchar, len);
+             //qDebug()<<str0;
+             strOut=str0;
+            }
+            }
+            else
+            {
+
+                for(int i=0;i<4-count;i+=1)
+                {
+                    str.insert(0,'0');
+                 }
+
+                 temp[0]=str.mid(i,4).toInt(&ok,16);//每四位转化为16进制整型
+                 QString str0=temp[0];
+
+                 strOut=str0;
+
+
+            }
+
+            result_list.append(strOut);
+            //QString key =  QString("%1").arg(tmp,4,16,QLatin1Char('0'));
+
+        }
+        return result_list;
+     }
+
 
 }
-
-//把3k个类别read到wcs中
-void mydraw::initial_PR(const char *file)
+void mydraw::vertification(QString ans)
 {
-    std::wcin.imbue(std::locale("CHS"));
-    std::wcout.imbue(std::locale("CHS"));
 
-    std::wifstream fis(file);
-    fis.imbue(std::locale("CHS"));
+    QString dir=QCoreApplication::applicationDirPath();
+     qDebug()<<dir;
+    if(ans==this->ans)
+    {
 
-    wchar_t wcvec[10];
-    int i=0;
-    while (!fis.eof()){
-        wchar_t wcx;
-        do{
-                wcx=fis.get();
-        }while (wcx!=L'\t');
-        do{
-                wcx=fis.get();
-        }while(wcx==L'\t');
-        wcs[i]=wcx;
-        fis.getline(wcvec,10);
-        i++;
+
+        QSound::play(dir+"/wav/right.wav");
+
     }
-    fis.close();
+    else
+    {
+        QSound::play(dir+"/wav/wrong.wav");
+    }
+}
+//把3k个类别read到wcs中
+void mydraw::initial_PR(const QString file_path)
+{
+   QTextCodec * code = QTextCodec::codecForName("unicode");
+    if(!file_path.isEmpty())
+    {//判断路径是否为空
+        qDebug("not empty");
+                QFile file(file_path); //定义指定路径文件
+                if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+                {
+                   qDebug() << "Cannot open file for reading: ";
+
+                 }
+                 //QDataStream in(&file);
+                 QTextStream stream(&file);
+                 stream.setCodec(code);//对输出流的设置
+                 while (stream.atEnd() == 0) {
+                   QString tmp=stream.readLine();//int for 3,2tab for 2
+                   int index=tmp.indexOf('\t');
+                   tmp=tmp.mid(index+2);
+                   //qDebug()<<stream.readLine();
+                   qDebug()<<tmp;
+                   world_list.append(tmp);
+                 }
+
+                 file.close();
+
+    }
+}
+
+void mydraw::next_word()
+{
+
+    int ran_num=rand()%998;
+    this->ans=world_list[ran_num];//right answer is the char seleted from the word_list
+     QString dir=QCoreApplication::applicationDirPath();
+     QProcess *myProcess = new QProcess(this);
+
+    myProcess->execute(dir+"/wav/tts.exe", QStringList()<<this->ans);
+    QSound::play("tts_sample.wav");
+
+    qDebug()<<this->ans;
+
 }
 
 bool mydraw::LoadPrototype(const char * txtname, const char* weihttxt){
@@ -538,3 +642,43 @@ QVector<Point2d>  mydraw::bresenhan_eqrespl(const QVector<Point2d> &re_im)
     }
     return re_spl;
 }
+
+
+//recognition
+bool mydraw::matchFeat(int K,QVector<int> & res)
+{
+
+    //使用KNN算法
+    Ptr<KNearest> knn = KNearest::create();  //创建knn分类器
+
+       knn->setDefaultK(K);    //设定k值
+       knn->setIsClassifier(true);
+       // 设置训练数据
+
+       Mat train_data(traindata->rows, traindata->cols, CV_32F, traindata->data.fl);
+
+       Mat train_label(trainclass->rows, trainclass->cols, CV_32F, trainclass->data.fl);
+       //label 0-3810
+
+       Ptr<TrainData> tData = TrainData::create(train_data, ROW_SAMPLE, train_label);
+       knn->train(tData);
+
+//       Mat nearests =Mat(1, K, CV_32FC1);
+//       cout<<nearests<<endl;
+       Mat test_data(testdata->rows, testdata->cols, CV_32F,testdata->data.fl);
+
+
+       Mat response,dist;
+       knn->findNearest(test_data, K,noArray() , response, dist);
+
+       cout << response << endl;
+       cout << dist<< endl;
+
+
+//    for( int k = 0; k < K; k++ )
+//        res.push_back(response.at<uchar>(1,k));
+
+
+    return true;
+}
+

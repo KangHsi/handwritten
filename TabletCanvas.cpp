@@ -3,7 +3,7 @@
 #include <QFile>
 #include <QPainter>
 #include <QPen>
-
+#include <qdebug.h>
 
 
 TabletCanvas::TabletCanvas(QWidget *parent, const char *name):QWidget(parent)
@@ -17,6 +17,7 @@ TabletCanvas::TabletCanvas(QWidget *parent, const char *name):QWidget(parent)
    // setStyleSheet(QString("background-color:red;"));
 
    // setStyleSheet(".QWidget{border-image: url(C:/Users/sk123/Documents/QTproject/WRT/image/check_back.png)}");
+    this->isPressed = true;//FOR PENPRESSURE
     this->update();
     setCursor(Qt::CrossCursor);
 }
@@ -26,16 +27,20 @@ TabletCanvas::~TabletCanvas()
 
 }
 
+//TABLET CONTROLLING
 void TabletCanvas::tabletEvent(QTabletEvent *ev)
 {
+
     switch(ev->type())
     {
         case QEvent::TabletPress:
         {
+
             mCrntPenPressure = ev->pressure();
             startPnt = ev->pos();
             endPnt = ev->pos();
             this->isPressed = true;
+
         }
             break;
 
@@ -58,10 +63,12 @@ void TabletCanvas::tabletEvent(QTabletEvent *ev)
              }
         }
         break;
-    case QEvent::TabletRelease:
-    {
-        this->isPressed = false;
-    }
+       case QEvent::TabletRelease:
+       {
+           this->isPressed = false;
+       }
+
+
         default:
             break;
     }
@@ -72,6 +79,7 @@ void TabletCanvas::tabletEvent(QTabletEvent *ev)
     emit tabletEventProcessed();
 }
 
+//every time repaint
 void TabletCanvas::paintEvent(QPaintEvent* p)
 {
     Q_UNUSED(p);
@@ -100,11 +108,48 @@ void TabletCanvas::paintEvent(QPaintEvent* p)
          }
 }
 
-int TabletCanvas::get_lines(int index)
+QString TabletCanvas::get_lines()
 {
-   bool a=writeFile("date.dat");
-   //return this->lines[index]->startPnt.x();
-   return 0;
+    QString traj;
+
+    int tmp=lines[0]->startPnt.x();
+    QString str=QString::number(tmp, 10);
+    traj.push_back(str+',');
+    tmp=lines[0]->startPnt.y();
+    str=QString::number(tmp, 10);
+    traj.push_back(str+',');
+
+//    tmp=lines[0]->endPnt.x();
+//    str=QString::number(tmp, 10);
+//    traj.push_back(str+',');
+//    tmp=lines[0]->endPnt.y();
+//    str=QString::number(tmp, 10);
+//    traj.push_back(str+",-1,0,");
+
+    qDebug()<<"lines size:"<<lines.size();
+    for(int i = 1;i<lines.size()-1;i++)
+    {
+
+     int tmp_x=lines[i]->startPnt.x();
+     int tmp_y=lines[i]->startPnt.y();
+     if (tmp_x+tmp_y-lines[i-1]->startPnt.x()-lines[i-1]->startPnt.y()>1)
+    {
+
+          str=QString::number(tmp_x, 10);
+          traj.push_back(str+',');
+          str=QString::number(tmp_y, 10);
+          traj.push_back(str+',');
+//          tmp_x=lines[i]->endPnt.x();
+//          tmp_y=lines[i]->endPnt.y();
+//          str=QString::number(tmp_x, 10);
+//          traj.push_back(str+',');
+//          str=QString::number(tmp_y, 10);
+//          traj.push_back(str+",-1,0,");
+
+      }
+    }
+
+   return traj;
 
 }
 
@@ -131,8 +176,8 @@ bool TabletCanvas::writeFile(const QString filePath)
            for(int m = 0;m<lines.size();m++)
            {
 
-              out << (QPoint)lines[m]->startPnt;
-              out << (QPoint)lines[m]->endPnt;
+              out << (QPointF)lines[m]->startPnt;
+              out << (QPointF)lines[m]->endPnt;
 
 
            }
@@ -140,31 +185,39 @@ bool TabletCanvas::writeFile(const QString filePath)
            file.close();
 
 
-           if (!file.open(QIODevice::ReadOnly))
-              {
-                  //qDebug() << "Cannot open file for reading: ";
-                  return 0;
-              }
-              QDataStream in(&file);
-              in.setVersion(QDataStream::Qt_4_9);
-              int n;
+//           if (!file.open(QIODevice::ReadOnly))
+//              {
+//                  //qDebug() << "Cannot open file for reading: ";
+//                  return 0;
+//              }
+//              QDataStream in(&file);
+//              in.setVersion(QDataStream::Qt_4_9);
+//              int n;
 
-              QByteArray s;
-              in >> s;
+//              QByteArray s;
+//              in >> s;
 
 
-              for(int m = 0;m<lines.size();m++)
-              {
-                 QPoint Pnt;
-                 in >> Pnt;
-                 qDebug("stPnt:(%d,%d)",Pnt.x(),Pnt.y());
+//              for(int m = 0;m<lines.size();m++)
+//              {
+//                 QPoint Pnt;
+//                 in >> Pnt;
+//                 qDebug("stPnt:(%d,%d)",Pnt.x(),Pnt.y());
 
-                 in >> Pnt;
+//                 in >> Pnt;
 
-              }
+//              }
 
-              file.close();
+//              file.close();
 
       }
     return 0;
+}
+
+void TabletCanvas::clean_lines()
+{
+    lines.clear();
+    qDebug("%d",lines.size());
+    this->update();
+
 }

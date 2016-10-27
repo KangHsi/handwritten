@@ -1,4 +1,4 @@
-#ifndef MYDRAW_H
+﻿#ifndef MYDRAW_H
 #define MYDRAW_H
 #include <opencv2\opencv.hpp>
 #include "opencv\cv.h"
@@ -17,16 +17,20 @@ class mydraw : public QObject
     Q_OBJECT
 private:
     CvMat *mulW;
+    QString ans;
     CvMat *traindata ;
     CvMat *trainclass;
     CvMat *testdata;
     wchar_t wcs[3811];
+    QStringList world_list;
     //pr_xu mypr;
 public:
     explicit mydraw(QObject *parent = 0);
     ~mydraw();
     bool LoadPrototype(const char * txtname, const char* weihttxt);//get prototype to train data and class label
-
+    QStringList recognition(QByteArray);
+    void next_word();
+    void vertification(QString);
     QVector<double>  Cal8dFeature(const QVector<cv::Point2d> &re_im,int im_nlsize[]);
     cv::Mat MyPaint(const QVector<cv::Point2d> &imtp,const QVector<cv::Point2d> &re_im);
     QVector<cv::Point2d>  mydraw::bresenhan(double x1,double y1,double x2,double y2);
@@ -38,12 +42,14 @@ public:
     QVector<cv::Point2d>  mydraw::im_smooth(const QVector<cv::Point2d> &re_im);
     QVector<cv::Point2d>  mydraw::bresenhan_eqrespl(const QVector<cv::Point2d> &re_im);
     //
+    bool mydraw::matchFeat(int K,QVector<int> & res);
     bool mydraw::getFeat_8d(QVector<cv::Point2f> itV);
-    bool matchFeat(int K,QVector<int> &res);
+   // bool matchFeat(int K,QVector<int> &res);
   //  void Extract8dFeature(IplImage *imgnl,QVector<Point2f>afNL,CvMat * featureVec,int row_num);
 protected:
-    void recognition(QString,QString);
-    void initial_PR(const char * file);
+
+    void initial_PR(const QString file_path);
+
 signals:
 
 public slots:

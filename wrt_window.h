@@ -1,9 +1,12 @@
-#ifndef WRT_WINDOW_H
+﻿#ifndef WRT_WINDOW_H
 #define WRT_WINDOW_H
 
 #include<QTcpServer>
 #include<QTcpSocket>
 #include<QHostAddress>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+
 #include<QMessageBox>
 #include<QDialog>
 
@@ -16,6 +19,7 @@
 #include "TabletCanvas.h"
 #include "ToolPalette.h"
 #include "mydraw.h"
+
 namespace Ui {
 class wrt_window;
 }
@@ -32,11 +36,12 @@ public:
 protected:
     bool eventFilter(QObject *obj, QEvent *event);
     void mouseMoveEvent(QMouseEvent *e);
-    //void mousePressEvent(QMouseEvent *e);
+    void mousePressEvent(QMouseEvent *e);
+   // void on_btnMenu_drag(QMouseEvent *e);
     void mouseReleaseEvent(QMouseEvent *);
     void resizeEvent(QResizeEvent *ev);
     void paintEvent(QPaintEvent *ev);
-
+    void keyPressEvent(QKeyEvent *k);
 
 
 private slots:
@@ -46,7 +51,6 @@ private slots:
 
     void on_btnMenu_Min_clicked();
 
- //   void on_pushButton_clicked();
     void onTabletEventProcessed();
 
     void on_next_button_clicked();
@@ -55,9 +59,13 @@ private slots:
 
     void on_subbmit_button_clicked();
 
+
+
 public slots:
     void sett();
     void getmsg();
+    void replyFinish(QNetworkReply*);
+
 private:
 
 
@@ -70,7 +78,7 @@ private:
     bool max;
     QRect location;
     QPoint mousePoint;
-
+    QNetworkAccessManager* net_man;
 
 
 
@@ -91,6 +99,7 @@ private:
     void updateTabletInfos();
     void InitStyle();
     void updateServer(QString, int);
+
 };
 
 #endif // WRT_WINDOW_H

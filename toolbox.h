@@ -47,6 +47,11 @@ public:
         //QApplication::setStyleSheet(qss)
         qApp->setPalette(QPalette(QColor("#F0F0F0")));
     }
+    //
+
+
+
+
 /*
     //load cn characters
     static void SetChinese()

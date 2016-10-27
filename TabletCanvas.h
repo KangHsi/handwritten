@@ -6,10 +6,11 @@
 //#include <vector>
 #include <QMessageBox>
 #include <QPoint>
+#include <opencv.hpp>
 //线段
 typedef struct myLine{
-    QPoint startPnt;
-    QPoint endPnt;
+    QPointF startPnt;
+    QPointF endPnt;
 }myLine;
 
 using namespace std;
@@ -26,7 +27,8 @@ public:
     int penXTilt(){return mPenXTilt;}
     int penYTilt(){return mPenYTilt;}
     void paintEvent(QPaintEvent *p); //重载
-    int get_lines(int index);
+    QString TabletCanvas::get_lines();
+    void clean_lines();
 signals:
     void tabletEventProcessed();
 
@@ -42,7 +44,7 @@ private:
     int mPenXTilt;
     int mPenYTilt;
     QVector<myLine*> lines; //存放所有的线段
-
+    //QVector<cv::Point2f> traj;
     QPoint startPnt;   //起点
     QPoint endPnt;     //终点
     bool isPressed;    //鼠标是否按下
